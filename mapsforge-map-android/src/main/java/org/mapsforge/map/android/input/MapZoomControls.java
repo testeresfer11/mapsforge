@@ -255,8 +255,7 @@ public class MapZoomControls extends LinearLayout implements Observer {
         // to allow changing zoom level programmatically, i.e. not just
         // by user interaction
         if (AndroidUtil.currentThreadIsUiThread()) {
-
-            Log.e("ZOOM LEVEL","${newZoomLevel});
+        Log.e("ZOOM LEVEL","${newZoomLevel}")
             changeZoomControls(newZoomLevel);
         } else {
             this.mapView.post(new Runnable() {
