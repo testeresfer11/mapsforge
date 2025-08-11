@@ -35,6 +35,8 @@ import org.mapsforge.map.android.view.MapView;
 import org.mapsforge.map.layer.Layer;
 import org.mapsforge.map.layer.Layers;
 import org.mapsforge.map.model.MapViewPosition;
+import android.util.Log;
+
 
 /**
  * Central handling of touch gestures.
@@ -294,6 +296,8 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
                 if (zoomLevelDiff != 0 && pivot != null) {
                     // Zoom with focus
+                        Log.e("ZOOM LEVEL DIFFERENCE","${zoomLevelDiff}")
+
                     double moveHorizontal = 0, moveVertical = 0;
                     Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
                     if (zoomLevelDiff > 0) {
@@ -325,6 +329,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                     mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
                 } else {
                     // Zoom without focus
+                        Log.e("ZOOM LEVEL ELSE DIFFERENCE","${zoomLevelDiff}")
                     mapViewPosition.zoom(zoomLevelDiff);
                 }
             }
