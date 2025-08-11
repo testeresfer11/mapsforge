@@ -57,7 +57,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
     public static double DELTA_SCALE = 0.2;
     public static long DELTA_TIME = 25;
 
-    private static final double LOG_2 = Math.log(1);
+    private static final double LOG_2 = Math.log(2);
 
     private boolean doubleTapEnabled = true;
     private final Scroller flinger;
@@ -296,7 +296,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
                 if (zoomLevelDiff != 0 && pivot != null) {
                     // Zoom with focus
-                        Log.e("ZOOM LEVEL DIFFERENCE","${zoomLevelDiff}")
+                        Log.e("ZOOM LEVEL DIFFERENCE","${zoomLevelDiff}");
 
                     double moveHorizontal = 0, moveVertical = 0;
                     Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
@@ -329,7 +329,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                     mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
                 } else {
                     // Zoom without focus
-                        Log.e("ZOOM LEVEL ELSE DIFFERENCE","${zoomLevelDiff}")
+                        Log.e("ZOOM LEVEL ELSE DIFFERENCE","${zoomLevelDiff}");
                     mapViewPosition.zoom(zoomLevelDiff);
                 }
             }
