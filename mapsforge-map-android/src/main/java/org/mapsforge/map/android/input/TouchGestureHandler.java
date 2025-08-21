@@ -283,6 +283,55 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
     public void onScaleEnd(ScaleGestureDetector detector) {
         
 
+       if (!Parameters.FRACTIONAL_ZOOM) {
+            double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
+            if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
+                byte zoomLevelDiff;
+                
+                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset < 0 ? Math.floor(zoomLevelOffset) : Math.ceil(zoomLevelOffset));
+
+                MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
+                if (false) {
+                    // Zoom with focus
+                    double moveHorizontal = 0, moveVertical = 0;
+                    Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
+                    if (zoomLevelDiff > 0) {
+                        // Zoom in
+                        for (int i = 1; i <= zoomLevelDiff; i++) {
+                            if (mapViewPosition.getZoomLevel() + i > mapViewPosition.getZoomLevelMax()) {
+                                break;
+                            }
+                            moveHorizontal += (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i);
+                            moveVertical += (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i);
+                        }
+                    } else {
+                        // Zoom out
+                        for (int i = -1; i >= zoomLevelDiff; i--) {
+                            if (mapViewPosition.getZoomLevel() + i < mapViewPosition.getZoomLevelMin()) {
+                                break;
+                            }
+                            moveHorizontal -= (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i + 1);
+                            moveVertical -= (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i + 1);
+                        }
+                    }
+                    mapViewPosition.setPivot(pivot);
+                    if ((moveHorizontal != 0 || moveVertical != 0) && !Rotation.noRotation(this.mapView.getMapRotation())) {
+                        Rotation mapRotation = new Rotation(this.mapView.getMapRotation().degrees, 0, 0);
+                        Point rotated = mapRotation.rotate(moveHorizontal, moveVertical);
+                        moveHorizontal = rotated.x;
+                        moveVertical = rotated.y;
+                    }
+                    mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
+                } else {
+                    // Zoom without focus
+                    mapViewPosition.zoom(zoomLevelDiff);
+                }
+            }
+        }
+
+
+        
+        
         this.isInDoubleTap = false;
     }
 
