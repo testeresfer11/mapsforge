@@ -231,12 +231,14 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
         }
         this.mapView.getModel().mapViewPosition.setScaleFactorAdjustment(scaleFactorCumulative);
 
+        /*
         if (Parameters.FRACTIONAL_ZOOM) {
             double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
             if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
                 this.mapView.getModel().mapViewPosition.setZoom(Math.max(0, this.zoomLevelStart + zoomLevelOffset), false);
             }
         }
+        */
         return true;
     }
 
