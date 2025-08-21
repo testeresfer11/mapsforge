@@ -281,7 +281,6 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
 
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
-        
         if (!Parameters.FRACTIONAL_ZOOM) {
             double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
             if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
@@ -293,7 +292,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 }
 
                 MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
-                if (false) {
+                if (zoomLevelDiff != 0 && pivot != null) {
                     // Zoom with focus
                     double moveHorizontal = 0, moveVertical = 0;
                     Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
@@ -330,8 +329,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 }
             }
         }
-        
-        
+
         this.isInDoubleTap = false;
     }
 
