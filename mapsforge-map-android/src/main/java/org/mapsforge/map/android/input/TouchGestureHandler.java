@@ -402,7 +402,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
     }
 
     public boolean onTouchEvent(MotionEvent event) {
-        if (this.rotationEnabled && event.getPointerCount() == 2 && !this.isInScale) {
+       /* if (this.rotationEnabled && event.getPointerCount() == 2 && !this.isInScale) {
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_POINTER_DOWN) {
                 this.currentAngle = rotation(event);
@@ -420,6 +420,7 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 this.mapView.getLayerManager().redrawLayers();
             }
         }
+        */
         return true;
     }
 
