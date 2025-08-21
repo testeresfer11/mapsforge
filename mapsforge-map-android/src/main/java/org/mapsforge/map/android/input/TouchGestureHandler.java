@@ -296,7 +296,6 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
                 if (zoomLevelDiff != 0 && pivot != null) {
                     // Zoom with focus
-                          Log.e("ZOOM LEVEL  DIFFERENCE", zoomLevelDiff.toString());
 
                     double moveHorizontal = 0, moveVertical = 0;
                     Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
@@ -329,7 +328,6 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                     mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
                 } else {
                     // Zoom without focus
-                             Log.e("ZOOM LEVEL ELSE DIFFERENCE", zoomLevelDiff.toString());
                     mapViewPosition.zoom(zoomLevelDiff);
                 }
             }
