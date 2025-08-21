@@ -282,13 +282,15 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
         
-
-       if (!Parameters.FRACTIONAL_ZOOM) {
+        if (!Parameters.FRACTIONAL_ZOOM) {
             double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
             if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
                 byte zoomLevelDiff;
-                
+                if (Parameters.ELASTIC_ZOOM) {
+                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset);
+                } else {
                     zoomLevelDiff = (byte) Math.round(zoomLevelOffset < 0 ? Math.floor(zoomLevelOffset) : Math.ceil(zoomLevelOffset));
+                }
 
                 MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
                 if (false) {
@@ -328,8 +330,6 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
                 }
             }
         }
-
-
         
         
         this.isInDoubleTap = false;
