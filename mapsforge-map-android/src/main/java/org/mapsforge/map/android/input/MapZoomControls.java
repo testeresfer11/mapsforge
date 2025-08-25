@@ -30,7 +30,6 @@ import android.widget.LinearLayout;
 import org.mapsforge.map.android.util.AndroidUtil;
 import org.mapsforge.map.android.view.MapView;
 import org.mapsforge.map.model.common.Observer;
-import android.util.Log;
 
 /**
  * A MapZoomControls instance displays buttons for zooming in and out in a map.
@@ -255,7 +254,6 @@ public class MapZoomControls extends LinearLayout implements Observer {
         // to allow changing zoom level programmatically, i.e. not just
         // by user interaction
         if (AndroidUtil.currentThreadIsUiThread()) {
-
             changeZoomControls(newZoomLevel);
         } else {
             this.mapView.post(new Runnable() {
