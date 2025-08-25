@@ -40,12 +40,12 @@ public final class Parameters {
     /**
      * Enable the elastic zoom.
      */
-    public static boolean ELASTIC_ZOOM = false;
+    public static boolean ELASTIC_ZOOM = true;
 
     /**
      * Enable the fractional zoom.
      */
-    public static boolean FRACTIONAL_ZOOM = false;
+    public static boolean FRACTIONAL_ZOOM = true;
 
     /**
      * Process layer scroll events.
