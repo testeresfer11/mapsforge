@@ -133,6 +133,7 @@ public class MapZoomControls extends LinearLayout implements Observer {
                 MapZoomControls.this.hide();
             }
         };
+        
 
         // Hack to get default zoom buttons
         android.widget.ZoomControls defaultZoomControls = new android.widget.ZoomControls(context);
