@@ -23,6 +23,7 @@ package org.mapsforge.map.android.input;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -50,13 +51,10 @@ import org.mapsforge.map.model.MapViewPosition;
  * </ul>
  */
 public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener implements ScaleGestureDetector.OnScaleGestureListener, Runnable {
-
     public static double DELTA_ANGLE = 15;
     public static double DELTA_SCALE = 0.2;
     public static long DELTA_TIME = 25;
-
     private static final double LOG_2 = Math.log(2);
-
     private boolean doubleTapEnabled = true;
     private final Scroller flinger;
     private int flingLastX, flingLastY;
@@ -214,123 +212,19 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
 
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
-        if (this.isInRotation) {
-            return true;
-        }
-        if (detector.getScaleFactor() <= 0) {
-            return true;
-        }
-        this.startScaleFactorCumulative *= detector.getScaleFactor();
-        if (this.rotationEnabled && !this.isInScale && Math.abs(this.startScaleFactorCumulative - 1) <= DELTA_SCALE) {
-            return true;
-        }
-        this.isInScale = true;
-        this.scaleFactorCumulative *= detector.getScaleFactor();
-        if (!Parameters.FRACTIONAL_ZOOM) {
-            this.mapView.getModel().mapViewPosition.setPivot(pivot);
-        }
-        this.mapView.getModel().mapViewPosition.setScaleFactorAdjustment(scaleFactorCumulative);
 
-        if (Parameters.FRACTIONAL_ZOOM) {
-            double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
-            if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
-                this.mapView.getModel().mapViewPosition.setZoom(Math.max(0, this.zoomLevelStart + zoomLevelOffset), false);
-            }
-        }
         return true;
     }
 
     @Override
     public boolean onScaleBegin(ScaleGestureDetector detector) {
-        if (!this.scaleEnabled) {
-            return false;
-        }
-        if (this.isInRotation) {
-            return false;
-        }
 
-        this.scaleFactorCumulative = (float) (this.mapView.getModel().mapViewPosition.getScaleFactor()
-                / Math.pow(2, this.mapView.getModel().mapViewPosition.getZoomLevel()));
-        this.startScaleFactorCumulative = this.scaleFactorCumulative;
-        this.zoomLevelStart = this.mapView.getModel().mapViewPosition.getZoomLevel();
-
-        if (Parameters.FRACTIONAL_ZOOM) {
-            this.mapView.onZoomEvent();
-        } else {
-            // Quick scale
-            if (this.isInDoubleTap) {
-                this.mapView.onZoomEvent();
-                if (this.mapView.getOffsetX() != 0 || this.mapView.getOffsetY() != 0) {
-                    this.mapView.onMoveEvent();
-                    this.focusX = this.mapView.getWidth() * 0.5f + this.mapView.getOffsetX();
-                    this.focusY = this.mapView.getHeight() * 0.5f + this.mapView.getOffsetY();
-                    this.pivot = this.mapView.getMapViewProjection().fromPixels(focusX, focusY);
-                } else {
-                    this.pivot = null;
-                }
-            } else {
-                this.mapView.onMoveEvent();
-                this.mapView.onZoomEvent();
-                this.focusX = detector.getFocusX();
-                this.focusY = detector.getFocusY();
-                this.pivot = this.mapView.getMapViewProjection().fromPixels(focusX, focusY);
-            }
-        }
         return true;
     }
 
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
-        if (!Parameters.FRACTIONAL_ZOOM) {
-            double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
-            if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
-                byte zoomLevelDiff;
-                if (Parameters.ELASTIC_ZOOM) {
-                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset);
-                } else {
-                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset < 0 ? Math.floor(zoomLevelOffset) : Math.ceil(zoomLevelOffset));
-                }
 
-                MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
-                if (zoomLevelDiff != 0 && pivot != null) {
-                    // Zoom with focus
-                    double moveHorizontal = 0, moveVertical = 0;
-                    Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
-                    if (zoomLevelDiff > 0) {
-                        // Zoom in
-                        for (int i = 1; i <= zoomLevelDiff; i++) {
-                            if (mapViewPosition.getZoomLevel() + i > mapViewPosition.getZoomLevelMax()) {
-                                break;
-                            }
-                            moveHorizontal += (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i);
-                            moveVertical += (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i);
-                        }
-                    } else {
-                        // Zoom out
-                        for (int i = -1; i >= zoomLevelDiff; i--) {
-                            if (mapViewPosition.getZoomLevel() + i < mapViewPosition.getZoomLevelMin()) {
-                                break;
-                            }
-                            moveHorizontal -= (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i + 1);
-                            moveVertical -= (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i + 1);
-                        }
-                    }
-                    mapViewPosition.setPivot(pivot);
-                    if ((moveHorizontal != 0 || moveVertical != 0) && !Rotation.noRotation(this.mapView.getMapRotation())) {
-                        Rotation mapRotation = new Rotation(this.mapView.getMapRotation().degrees, 0, 0);
-                        Point rotated = mapRotation.rotate(moveHorizontal, moveVertical);
-                        moveHorizontal = rotated.x;
-                        moveVertical = rotated.y;
-                    }
-                    mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
-                } else {
-                    // Zoom without focus
-                    mapViewPosition.zoom(zoomLevelDiff);
-                }
-            }
-        }
-
-        this.isInDoubleTap = false;
     }
 
     @Override
@@ -396,25 +290,171 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
         return false;
     }
 
+    private float initialDistance = 0f;
+
+    private float getDistance(MotionEvent event) {
+        float dx = event.getX(0) - event.getX(1);
+        float dy = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private float currentScale = 1f;
+
     public boolean onTouchEvent(MotionEvent event) {
-        if (this.rotationEnabled && event.getPointerCount() == 2 && !this.isInScale) {
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_POINTER_DOWN) {
-                this.currentAngle = rotation(event);
-                this.startAngle = this.currentAngle;
+
+
+            int pointerCount = event.getPointerCount();
+
+            if(pointerCount == 2){
+
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    if (!this.scaleEnabled) {
+                        return false;
+                    }
+                    if (this.isInRotation) {
+                        return false;
+                    }
+                    initialDistance = getDistance(event);
+
+                    this.scaleFactorCumulative = (float) (this.mapView.getModel().mapViewPosition.getScaleFactor()
+                            / Math.pow(2, this.mapView.getModel().mapViewPosition.getZoomLevel()));
+                    this.startScaleFactorCumulative = this.scaleFactorCumulative;
+                    this.zoomLevelStart = this.mapView.getModel().mapViewPosition.getZoomLevel();
+
+                    if (Parameters.FRACTIONAL_ZOOM) {
+                        this.mapView.onZoomEvent();
+                    } else {
+                        // Quick scale
+                        if (this.isInDoubleTap) {
+                            this.mapView.onZoomEvent();
+                            if (this.mapView.getOffsetX() != 0 || this.mapView.getOffsetY() != 0) {
+                                this.mapView.onMoveEvent();
+                                this.focusX = this.mapView.getWidth() * 0.5f + this.mapView.getOffsetX();
+                                this.focusY = this.mapView.getHeight() * 0.5f + this.mapView.getOffsetY();
+                                this.pivot = this.mapView.getMapViewProjection().fromPixels(focusX, focusY);
+                            } else {
+                                this.pivot = null;
+                            }
+                        } else {
+                            this.mapView.onMoveEvent();
+                            this.mapView.onZoomEvent();
+                            float dx = event.getX(0) - event.getX(1);
+                            float dy = event.getY(0) - event.getY(1);
+
+                            this.focusX = dx;
+                            this.focusY = dy;
+                            this.pivot = this.mapView.getMapViewProjection().fromPixels(focusX, focusY);
+                        }
+                    }
+
+                    Log.e("Zoom", "ScaleFactor: " + "FFFFDDFD");
+
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    Log.e("Zoom", "ScaleFactor: " + "MOBEEEE");
+                    float newDistance = getDistance(event);
+                    if (initialDistance > 0) {
+                        float scaleFactor = newDistance / initialDistance;
+                        currentScale *= scaleFactor;
+                        initialDistance = newDistance;
+
+                        // Use scaleFactor or currentScale to zoom your view
+                        Log.e("Zoom", "ScaleFactor: " + scaleFactor);
+
+
+                        if (this.isInRotation) {
+                            return true;
+                        }
+                        if (scaleFactor <= 0) {
+                            return true;
+                        }
+                        this.startScaleFactorCumulative *= scaleFactor;
+                        if (this.rotationEnabled && !this.isInScale && Math.abs(this.startScaleFactorCumulative - 1) <= DELTA_SCALE) {
+                            return true;
+                        }
+                        this.isInScale = true;
+                        this.scaleFactorCumulative *= scaleFactor;
+                        if (!Parameters.FRACTIONAL_ZOOM) {
+                            this.mapView.getModel().mapViewPosition.setPivot(pivot);
+                        }
+                        this.mapView.getModel().mapViewPosition.setScaleFactorAdjustment(scaleFactorCumulative);
+
+                        if (Parameters.FRACTIONAL_ZOOM) {
+                            double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
+                            if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
+                                this.mapView.getModel().mapViewPosition.setZoom(Math.max(0, this.zoomLevelStart + zoomLevelOffset), false);
+                            }
+                        }
+
+                        // Update initial distance for the next move
+                    }
+                    break;
+
+                case MotionEvent.ACTION_POINTER_UP:
+                case MotionEvent.ACTION_UP:
+                    Log.e("Zoom", "ScaleFactor: " + "sdsadsdsdada");
+                    if (pointerCount <= 2) {
+                      //  initialDistance = 0f; // reset
+
+                        if (!Parameters.FRACTIONAL_ZOOM) {
+                            double zoomLevelOffset = Math.log(this.scaleFactorCumulative) / LOG_2;
+                            if (!Double.isNaN(zoomLevelOffset) && zoomLevelOffset != 0) {
+                                byte zoomLevelDiff;
+                                if (Parameters.ELASTIC_ZOOM) {
+                                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset);
+                                } else {
+                                    zoomLevelDiff = (byte) Math.round(zoomLevelOffset < 0 ? Math.floor(zoomLevelOffset) : Math.ceil(zoomLevelOffset));
+                                }
+
+                                MapViewPosition mapViewPosition = this.mapView.getModel().mapViewPosition;
+                                if (zoomLevelDiff != 0 && pivot != null) {
+                                    // Zoom with focus
+                                    double moveHorizontal = 0, moveVertical = 0;
+                                    Point center = this.mapView.getModel().mapViewDimension.getDimension().getCenter();
+                                    if (zoomLevelDiff > 0) {
+                                        // Zoom in
+                                        for (int i = 1; i <= zoomLevelDiff; i++) {
+                                            if (mapViewPosition.getZoomLevel() + i > mapViewPosition.getZoomLevelMax()) {
+                                                break;
+                                            }
+                                            moveHorizontal += (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i);
+                                            moveVertical += (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i);
+                                        }
+                                    } else {
+                                        // Zoom out
+                                        for (int i = -1; i >= zoomLevelDiff; i--) {
+                                            if (mapViewPosition.getZoomLevel() + i < mapViewPosition.getZoomLevelMin()) {
+                                                break;
+                                            }
+                                            moveHorizontal -= (center.x - focusX + this.mapView.getOffsetX()) / Math.pow(2, i + 1);
+                                            moveVertical -= (center.y - focusY + this.mapView.getOffsetY()) / Math.pow(2, i + 1);
+                                        }
+                                    }
+                                    mapViewPosition.setPivot(pivot);
+                                    if ((moveHorizontal != 0 || moveVertical != 0) && !Rotation.noRotation(this.mapView.getMapRotation())) {
+                                        Rotation mapRotation = new Rotation(this.mapView.getMapRotation().degrees, 0, 0);
+                                        Point rotated = mapRotation.rotate(moveHorizontal, moveVertical);
+                                        moveHorizontal = rotated.x;
+                                        moveVertical = rotated.y;
+                                    }
+                                    mapViewPosition.moveCenterAndZoom(moveHorizontal, moveVertical, zoomLevelDiff);
+                                } else {
+                                    // Zoom without focus
+                                    mapViewPosition.zoom(zoomLevelDiff);
+                                }
+                            }
+                        }
+
+                        this.isInDoubleTap = false;
+
+
+                    }
+                    break;
+
             }
-            final float delta = rotation(event) - this.currentAngle;
-            this.currentAngle += delta;
-            if (!this.isInRotation && angleDifference(this.startAngle, this.currentAngle) < DELTA_ANGLE) {
-                return false;
             }
-            if (System.currentTimeMillis() - DELTA_TIME > this.lastTime) {
-                this.isInRotation = true;
-                this.lastTime = System.currentTimeMillis();
-                this.mapView.rotate(new Rotation(this.mapView.getMapRotation().degrees + delta, this.mapView.getWidth() * 0.5f, this.mapView.getHeight() * 0.5f));
-                this.mapView.getLayerManager().redrawLayers();
-            }
-        }
         return true;
     }
 
@@ -478,5 +518,9 @@ public class TouchGestureHandler extends GestureDetector.SimpleOnGestureListener
      */
     public void setScaleEnabled(boolean scaleEnabled) {
         this.scaleEnabled = scaleEnabled;
+    }
+
+    public void onZoomEvent(MotionEvent event) {
+
     }
 }
